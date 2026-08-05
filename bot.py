@@ -34,7 +34,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("pchol_bot")
 
-bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # Порядок include_router важен: специфичные хендлеры (команды, шаблоны, callback'и)

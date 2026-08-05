@@ -10,6 +10,9 @@ from services.economy import beefarm_total_cost
 router = Router(name="farms_boosts")
 
 
+MAX_FARMS = 1000000  # ~1 млн ферм максимум
+MAX_BOOSTS = 1000000
+
 @router.message(Command(commands=["beefarm"]))
 async def cmd_beefarm(message: Message):
     parts = message.text.split()
@@ -18,11 +21,12 @@ async def cmd_beefarm(message: Message):
         return
     try:
         n = int(parts[1])
-        if n <= 0:
+        if n <= 0 or n > MAX_FARMS:
             raise ValueError()
     except ValueError:
-        await message.reply("Неверное число.")
+        await message.reply(f"Неверное число. Укажите от 1 до {MAX_FARMS}.")
         return
+
 
     uid = message.from_user.id
     wallet = await users_repo.get_user_wallet(uid)
