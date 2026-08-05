@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS poll_votes (
     user_id BIGINT NOT NULL,
     option_ids TEXT NOT NULL,
     voted_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    rewarded BOOLEAN DEFAULT FALSE
+    rewarded BOOLEAN DEFAULT FALSE,
+    UNIQUE(poll_db_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS checks (

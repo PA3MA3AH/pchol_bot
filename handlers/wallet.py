@@ -1,5 +1,5 @@
 # handlers/wallet.py
-import json
+import html
 
 from aiogram import Router, Bot
 from aiogram.filters import Command
@@ -10,6 +10,10 @@ from db.pool import db
 import repositories.users_repo as users_repo
 
 router = Router(name="wallet")
+
+
+def _h(s: str) -> str:
+    return html.escape(str(s))
 
 
 @router.message(Command(commands=["pchol"]))
@@ -51,7 +55,7 @@ async def cmd_wallet(message: Message):
         nft_text = "Нет NFT-пчёл"
 
     text = (
-        f"💼 Кошелёк {message.from_user.full_name}:\n"
+        f"💼 Кошелёк {_h(message.from_user.full_name)}:\n"
         f"Мёд: {w['honey']:.3f}\n"
         f"Пчолы: {w['bees']}\n"
         f"Авто-фермы: {w['farms']} (каждая даёт ~2 пчол/мин)\n"
