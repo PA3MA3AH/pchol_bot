@@ -1,12 +1,11 @@
 # services/economy.py
 import time
-from typing import Dict, Tuple
+from typing import Tuple
 
 from aiogram.types import Message
 
 from config import BEE, RATE_WINDOW, MAX_BEES_PER_WINDOW, BEEFARM_BASE_PRICE
-
-_user_rate: Dict[int, list] = {}
+from db.pool import db
 
 
 def count_bees_in_message(msg: Message) -> int:
@@ -21,18 +20,41 @@ def count_bees_in_message(msg: Message) -> int:
     return count
 
 
-def can_receive_bees(user_id: int, incoming: int) -> Tuple[bool, int]:
+async def can_receive_bees(user_id: int, incoming: int) -> Tuple[bool, int]:
     """Скользящее окно RATE_WINDOW секунд, максимум MAX_BEES_PER_WINDOW пчол."""
     now = int(time.time())
-    arr = _user_rate.setdefault(user_id, [])
-    while arr and arr[0][0] <= now - RATE_WINDOW:
-        arr.pop(0)
-    current = sum(x[1] for x in arr)
-    space = MAX_BEES_PER_WINDOW - current
-    accept = max(0, min(space, incoming))
-    if accept > 0:
-        arr.append((now, accept))
-    return accept > 0, accept
+    async with db.pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT window_start, total_bees FROM user_rate_limits WHERE user_id=$1",
+            user_id,
+        )
+        if row:
+            window_start = int(row["window_start"])
+            total = int(row["total_bees"])
+            if now - window_start >= RATE_WINDOW:
+                # Окно истекло, сбрасываем
+                await conn.execute(
+                    "INSERT INTO user_rate_limits (user_id, window_start, total_bees) VALUES ($1, $2, $3) "
+                    "ON CONFLICT (user_id) DO UPDATE SET window_start=EXCLUDED.window_start, total_bees=EXCLUDED.total_bees",
+                    user_id, now, 0,
+                )
+                total = 0
+            space = MAX_BEES_PER_WINDOW - total
+            accept = max(0, min(space, incoming))
+            if accept > 0:
+                await conn.execute(
+                    "UPDATE user_rate_limits SET total_bees = total_bees + $1 WHERE user_id=$2",
+                    accept, user_id,
+                )
+            return accept > 0, accept
+        else:
+            # Первый раз
+            accept = min(MAX_BEES_PER_WINDOW, incoming)
+            await conn.execute(
+                "INSERT INTO user_rate_limits (user_id, window_start, total_bees) VALUES ($1, $2, $3)",
+                user_id, now, accept,
+            )
+            return accept > 0, accept
 
 
 def beefarm_total_cost(existing_farms: int, n: int) -> int:

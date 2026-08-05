@@ -43,7 +43,7 @@ async def on_new_message(message: Message):
             await users_repo.ensure_zero_message(message.chat.id, message.message_id, user_id)
             return
 
-        ok, accepted = can_receive_bees(user_id, bees)
+        ok, accepted = await can_receive_bees(user_id, bees)
         if not ok:
             await message.reply(f"Лимит получения пчол за минуту исчерпан (макс {MAX_BEES_PER_WINDOW}). Попробуйте позже.")
             return
@@ -63,7 +63,7 @@ async def on_edited_message(message: Message):
         bees = count_bees_in_message(message)
         if bees > 0 and await users_repo.is_frozen(user_id):
             return
-        ok, accepted = can_receive_bees(user_id, bees)
+        ok, accepted = await can_receive_bees(user_id, bees)
         if not ok and accepted == 0:
             return
         await users_repo.update_message_on_edit(message.chat.id, message.message_id, accepted, user_id)

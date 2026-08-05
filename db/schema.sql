@@ -178,6 +178,12 @@ CREATE TABLE IF NOT EXISTS raid_cooldown (
     last_attack TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS user_rate_limits (
+    user_id BIGINT PRIMARY KEY,
+    window_start BIGINT NOT NULL DEFAULT 0,
+    total_bees INT NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS transactions_log (
     id SERIAL PRIMARY KEY,
     user_from BIGINT,
