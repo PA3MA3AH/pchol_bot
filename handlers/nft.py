@@ -145,7 +145,7 @@ async def cmd_nft_sell(message: Message):
         return
 
     await nft_repo.list_nft(nft_id, seller, price)
-    await message.reply(f"✅ NFT <b>{nft['name']}</b> (#{nft_id}) выставлен на продажу за {price} пчол.", parse_mode="HTML")
+    await message.reply(f"✅ NFT <b>{_he(nft['name'])}</b> (#{nft_id}) выставлен на продажу за {price} пчол.", parse_mode="HTML")
 
 
 @router.message(Command(commands=["nft_list"]))
